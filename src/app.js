@@ -11,6 +11,8 @@ const allowedOrigins = (process.env.CORS_ORIGIN || "")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+app.disable("x-powered-by");
+
 app.use(
   cors({
     origin(origin, callback) {
@@ -18,7 +20,7 @@ app.use(
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin)) {
+      if (!allowedOrigins.length || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
@@ -29,10 +31,26 @@ app.use(
     methods: ["GET", "POST"],
   })
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.get("/health", (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Backend is healthy.",
+  });
+});
+
 app.use("/", applicationRoutes);
+
+app.use((_req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found.",
+  });
+});
+
 app.use(errorHandler);
 
 module.exports = app;
